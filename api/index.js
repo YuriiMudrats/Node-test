@@ -2,9 +2,12 @@ const express=require('express')
 const morgan=require('morgan')
 const bodyParser=require('body-parser')
 const app=express()
+const mongoose=require('mongoose')
 
 const productsRouter=require('./routes/products')
 const ordersRouer=require('./routes/products')
+
+mongoose.connect('mongodb+srv://shop_rest:'+process.env.MONGO_ATLAS_PW+'@cluster0-ozx1s.mongodb.net/test?retryWrites=true',{ useNewUrlParser: true })
 
 app.use(morgan('dev'))
 app.use(bodyParser.urlencoded({extended:false}))
