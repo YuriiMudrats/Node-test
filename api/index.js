@@ -5,9 +5,14 @@ const app=express()
 const mongoose=require('mongoose')
 
 const productsRouter=require('./routes/products')
-const ordersRouer=require('./routes/products')
+const ordersRouter=require('./routes/orders')
 
-mongoose.connect('mongodb+srv://shop_rest:'+process.env.MONGO_ATLAS_PW+'@cluster0-ozx1s.mongodb.net/test?retryWrites=true',{ useNewUrlParser: true })
+mongoose.connect('mongodb+srv://shop_rest:1111@cluster0-ozx1s.mongodb.net/test?retryWrites=true',{ useNewUrlParser: true })
+const db = mongoose.connection
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+    console.log('db conected')
+  })
 
 app.use(morgan('dev'))
 app.use(bodyParser.urlencoded({extended:false}))
@@ -25,7 +30,7 @@ app.use((req,res,next)=>{
 
 
 app.use('/products',productsRouter)
-app.use('/orders',ordersRouer)
+app.use('/orders',ordersRouter)
 
 app.use((req,res,next)=>{
     const error= new Error('Not found')

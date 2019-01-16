@@ -1,5 +1,5 @@
 {
     "env":{
-        "MONGO_ATLAS_PW":"1111"
+        "MONGO_ATLAS_PW":"test"
     }
 }

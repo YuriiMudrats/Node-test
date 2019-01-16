@@ -3,11 +3,28 @@ const router=express.Router()
 const mongoose=require('mongoose')
 
 //MODELS
-const Product=require('../models/produst')
+const Product=require('../models/product')
 
 router.get('/',(req,res,next)=>{
-    Product.find().exec().then(data=>{
-        res.status(200).json(data)
+    Product.find()
+    .select('name price _id')
+    .exec()
+    .then(data=>{
+        const response={
+            count:data.length,
+            products:data.map(prod=>{
+                return{
+                    name:prod.name,
+                    price: prod.price,
+                    _id:prod._id,
+                    method:{
+                        type:'GET',
+                        url:`products/${prod._id}`
+                    }
+                }
+            })
+        }
+        res.status(200).json(response)
     }
     ).catch(err=>{
         res.status(500).json({
@@ -29,8 +46,12 @@ router.post('/',(req,res,next)=>{
     product.save().then(
         (data)=>{
             res.status(201).json({
-                message: 'POST METHOD',
-                product:data
+                created: true,
+                product:{
+                    name:data.name,
+                    id: data._id,
+                    price:data.price
+                }
             })
         }).catch(err=>{
             res.status(500).json({
@@ -42,11 +63,18 @@ router.post('/',(req,res,next)=>{
 
 router.get('/:productId',(req,res,next)=>{
     const id =req.params.productId
-    Product.findById(id).exec().then(
-        data=>{
-            
+    Product.findById(id)
+    .exec()
+    .then(
+        data=>{            
             if(data){
-                res.status(200).json(data)  
+                res.status(200).json({
+                    product:{
+                        name:data.name,
+                        price:data.price,
+                        id:data._id
+                    }
+                })  
             }else{
                 res.status(404).json({
                     message:'cant created for provided ID'
@@ -68,11 +96,12 @@ router.patch('/:productId',(req,res,next)=>{
     for(const ops of req.body){
         updateOps[ops.name]=ops.value 
     }
-    Product.update({_id:id},{$set:updateOps})
+    Product
+    .update({_id:id},{$set:updateOps})
     .exec()
     .then(data=>{
         res.status(200).json({            
-            id:id,
+            updated:true,
             data
         })
     })
@@ -86,18 +115,19 @@ router.patch('/:productId',(req,res,next)=>{
 
 router.delete('/:productId',(req,res,next)=>{
     const id =req.params.productId
-    Product.remove({_id:id})
+    Product
+    .remove({_id:id})
     .exec()
     .then(data=>{
         res.status(200).json({
             delete: true
-            ,id:id,
-            data
+            ,id:data._id
+            
         })
     })
     .catch(err=>{
         res.status(500).json({
-            mesage:'cant deleted'
+            message:'cant deleted'
         })
     })
     
