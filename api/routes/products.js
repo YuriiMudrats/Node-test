@@ -1,22 +1,50 @@
 const express = require('express')
 const router=express.Router()
 const mongoose=require('mongoose')
+const multer=require('multer')
+
+const storage=multer.diskStorage({
+    destination: function(req,file,cd){
+        cd(null,'./uploads/')
+    },
+    filename: function(req,file,cd){
+        cd(null,new Date().toISOString()+file.originalname)
+    }
+})
+const fileFilter=(req,file,cb)=>{
+    if(file.mimetype==='image/jpeg'||file.mimetype==='image/png'){
+        cb(null,true)
+    }else{
+        cb(null,false)
+    }
+}
+
+const upload = multer({
+    storage: storage,
+    limits:{
+    fileSize:1024*1024**5
+    },
+    fileFilter:fileFilter
+}
+
+)
 
 //MODELS
 const Product=require('../models/product')
 
 router.get('/',(req,res,next)=>{
     Product.find()
-    .select('name price _id')
+    .select('name price _id productImage')
     .exec()
     .then(data=>{
         const response={
             count:data.length,
             products:data.map(prod=>{
                 return{
+                    _id:prod._id,
                     name:prod.name,
                     price: prod.price,
-                    _id:prod._id,
+                    productImage:prod.productImage,
                     method:{
                         type:'GET',
                         url:`products/${prod._id}`
@@ -35,12 +63,12 @@ router.get('/',(req,res,next)=>{
     
 })
 
-router.post('/',(req,res,next)=>{
-   
+router.post('/',upload.single('productImage'),(req,res,next)=>{   
     const product= new Product({
         _id:mongoose.Types.ObjectId(),
         name:req.body.name,
-        price:req.body.price
+        price:req.body.price,
+        productImage: req.file.path
     })
 
     product.save().then(
@@ -50,7 +78,8 @@ router.post('/',(req,res,next)=>{
                 product:{
                     name:data.name,
                     id: data._id,
-                    price:data.price
+                    price:data.price,
+                    productImage:data.productImage,
                 }
             })
         }).catch(err=>{

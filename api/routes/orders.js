@@ -8,6 +8,7 @@ const Product=require('../models/product')
 router.get('/',(req,res,next)=>{
     Order.find()
     .select('product quantity _id')
+    .populate('product','name')
     .then(data=>{
         res.status(200).json({
             count: data.length,
@@ -34,7 +35,7 @@ router.post('/',(req,res,next)=>{
         }
         const order=new Order({
             _id:mongoose.Types.ObjectId(),
-            product:req.body.productId,
+            productId:req.body.productId,
             quantity:req.body.quantity
         })
         order.save()
@@ -42,7 +43,7 @@ router.post('/',(req,res,next)=>{
             res.status(201).json({            
                 order:{
                  _id:doc._id,
-                 product:doc.product,
+                 productId:doc.product,
                  quantity:doc.quantity
                 }
             })
@@ -64,9 +65,11 @@ router.post('/',(req,res,next)=>{
 })
 
 router.get('/:orderId',(req,res,next)=>{
-    Order.findById({_id:req.body.orderId})
+    console.log(req)
+    Order.findById({_id:req.params.orderId})
     .exec()
     .then(doc=>{
+        console.log(doc)
         if(!doc){
            return res.status(500).json({
                 message: 'Cant found order'
@@ -76,10 +79,15 @@ router.get('/:orderId',(req,res,next)=>{
             order:doc
         })
     })
-    .catch()
-    res.status(500).json({
-        message: 'Cant found order'
-    })
+    .catch(
+        err=>{
+            res.status(500).json({
+                message: 'Cant found order',
+                error:err
+            }) 
+        }
+    )
+    
 })
 
 router.patch('/:orderId',(req,res,next)=>{
@@ -91,11 +99,21 @@ router.patch('/:orderId',(req,res,next)=>{
 })
 
 router.delete('/:orderId',(req,res,next)=>{
-    const id =req.params.orderId    
-    res.status(200).json({
-        message: 'ORDERS WAS DELETED'
-        ,id:id
+    const id =req.params.orderId  
+    Order.deleteOne({_id:id})
+    .exec()
+    .then(order=>{
+        res.status(200).json({
+            message: 'ORDERS WAS DELETED'
+            ,id:id
+        })       
     })
+    .catch(err=>{
+        res.status(500).json({
+            message: err            
+        }) 
+    })  
+    
 })
 
 module.exports=router
